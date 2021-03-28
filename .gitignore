@@ -11,7 +11,7 @@
 *.ilk
 *.map
 *.exp
-
+Project1/src/*.mp
 # Precompiled Headers
 *.gch
 *.pch
