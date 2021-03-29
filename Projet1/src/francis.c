@@ -191,7 +191,7 @@ void final(int *b, int *a, int taille, char op)
             b[j] = operation(b[j], a[j], op);
             //printf("b[%d] = %d\n", j, b[j]);
         }
-        printf("\n");
+        //printf("\n");
     /*}
     else{
         #pragma omp parallel for
@@ -314,16 +314,16 @@ int main(int argc, char **argv)
         int n1 = pow(2, value_test_log2);
         
 
-        printf("tab : \t");
+        /*printf("tab : \t");
         for(int i = 0;i<nb_elements; i++){
             printf("%d ", tab[i]);
         }
-        printf("\n");
+        printf("\n");*/
         int tab1[n1];
         int tab2[n2];
 
         remplir(tab1, tab2, tab, n1, n2);
-        printf("tab1 : \t");
+        /*printf("tab1 : \t");
         for(int i = 0; i<n1; i++){
             printf("%d ", tab1[i]);
         }
@@ -332,7 +332,7 @@ int main(int argc, char **argv)
         for(int i = 0; i<n2; i++){
             printf("%d ", tab2[i]);
         }
-        printf("\n");
+        printf("\n");*/
         int size_a1 = pow(2, log2(n1) + 1) - 1;
         int *a1 = malloc(sizeof(int) * size_a1); //create_copieTable(tab1, n1, op);
         initialize(a1,tab1, n1, op);
@@ -348,7 +348,7 @@ int main(int argc, char **argv)
             initialize(a2, tab2, n2, op);
             montee(a2, n2, op);
         }
-        printf("a1 :\t");
+        /*printf("a1 :\t");
         for(int i = 0; i<2*n1-1; i++){
             printf("%d ", a1[i]);
         }
@@ -357,7 +357,7 @@ int main(int argc, char **argv)
         for(int i = 0; i<2*n2-1; i++){
             printf("%d ", a2[i]);
         }
-        printf("\n");
+        printf("\n");*/
         int size_b1 = pow(2, log2(n1) + 1) - 1;
         int *b1 = malloc(sizeof(int) * size_b1); //create_copieTable(tab1, n1, op);
         initialize(b1,tab1,n1,op);
@@ -373,7 +373,7 @@ int main(int argc, char **argv)
             copy(b2, a2, n2);
         }
         copy(b1, a1, n1);
-        printf("b1 : \t");
+        /*printf("b1 : \t");
         for(int i = 0; i<2*n1-1; i++){
             printf("%d ", b1[i]);
         }
@@ -383,25 +383,25 @@ int main(int argc, char **argv)
         for(int i = 0; i<2*n2-1; i++){
             printf("%d ",b2[i]);
         }
-        printf("\n");
+        printf("\n");*/
 
         descente(b1, a1, n1, op);
-        printf("après descente : b1 :\t");
+        /*printf("après descente : b1 :\t");
         for(int i = 0; i<2*n1-1; i++){
             printf("%d ", b1[i]);
-        }
+        }*/
         final(b1, a1, n1, op);
         if (reste != 0)
         {
             descente(b2, a2, n2, op);
-            printf("\naprès descente :b2 :\t");
+            /*printf("\naprès descente :b2 :\t");
             for(int i = 0; i<2*n2-1; i++){
                 printf("%d ",b2[i]);
-            }
+            }*/
             final(b2, a2, n2, op);
         }
 
-        
+        /*
         printf("\naprès finale \b1 : ");
         for(int i = 0; i<2*n1-1; i++){
             printf("%d ", b1[i]);
@@ -414,7 +414,7 @@ int main(int argc, char **argv)
         }
         printf("\n");
         
-        printf("new processing ...\n\n");
+        printf("new processing ...\n\n");*/
 
         /*free(a1);
         free(b1);
@@ -489,7 +489,7 @@ int main(int argc, char **argv)
             pmax[nb_elements-1-i] = b1[size_b1-1-i];
             i++;
         }
-        printf("psum : \t");
+        /*printf("psum : \t");
         for(int i =0;i<nb_elements;i++)printf("%d ", psum[i]);
         printf("\n");
         printf("ssum : \t");
@@ -500,7 +500,7 @@ int main(int argc, char **argv)
         printf("\n");
         printf("pmax : \t");
         for(int i =0;i<nb_elements;i++)printf("%d ", pmax[i]);
-        printf("\n");
+        printf("\n");*/
         
         /**
          * for 1 <= i <= n do in parallel
@@ -522,9 +522,9 @@ int main(int argc, char **argv)
             }
             M[i] = value;
         }
-        printf("M : \t");
+        /*printf("M : \t");
         for(int i =0;i<nb_elements;i++)printf("%d ", M[i]);
-        printf("\n");
+        printf("\n");*/
 
         i = index_of_max_val;
         while (i<nb_element_sub_tab)
