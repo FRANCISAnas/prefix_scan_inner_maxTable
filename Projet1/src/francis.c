@@ -3,10 +3,171 @@
 #include <math.h>
 #include <omp.h>
 
+
 void descente(int *b, int *a, int taille, char op);
 void final(int *b, int *a, int taille, char op);
 void montee(int *tab, int taille, char op);
 int operation(int, int, char);
+int find_sum_zero_index(int*, int, int);
+
+
+int find_sum_zero_index(int* tab, int size, int index_of_max){
+     /**
+     * 1- find the number that repeats in the end
+    */
+
+    int sum = tab[size-1];
+    int the_number, index_to_ret= -1, count_positive = 0, count_negative = 0;
+    int i;
+    if(sum>0){
+        for(i=size-2;i>=0;i--){
+            if(tab[i]<0)count_negative+=tab[i];
+            sum += tab[i];
+            if(sum == 0 && i>index_of_max){
+                the_number = abs(count_negative);
+                index_to_ret = i;
+                break;
+            }
+        }
+    }
+
+    else{
+        for(i=size-2;i>=0;i--){
+            if(tab[i]>0)count_positive+=tab[i];
+            sum += tab[i];
+            if(sum == 0 && i>index_of_max){
+                the_number = abs(count_positive);
+                break;
+            }
+        }
+    }
+
+    if(i==0 || i<= index_of_max)return -1;
+    int j = i-1;
+    sum = tab[j];
+    j--;
+    if(sum>0){
+        count_negative = 0;
+        while(j>0){
+            if(tab[i]<0)count_negative+=tab[i];
+            sum +=tab[j];
+            if(sum == 0 && abs(count_negative) == the_number && j>index_of_max)index_to_ret = j;
+            j--;
+        }
+    }
+    else{
+        count_positive = 0;
+        while(j>0){
+            if(tab[i]>0)count_positive+=tab[i];
+            sum +=tab[j];
+            if(sum == 0 && count_positive == the_number && j>index_of_max)index_to_ret = j;
+            j--;
+        }
+    }
+    
+    return index_to_ret>index_of_max?index_to_ret:-1;
+}
+
+
+typedef struct t_table *Table;
+
+
+#define ALLOC_SIZE 4
+
+struct t_table {                // ImplÃ©mentation avec un tableau
+  int *tab;
+  int size;
+  int nb_elem;
+};
+
+
+//
+// Creation d'une table vide
+//
+Table creer_table(void) {
+  Table t         = malloc(sizeof(struct t_table));
+  int *tab = malloc(ALLOC_SIZE * sizeof(int));
+
+  if (!t || !tab) {
+     fprintf(stderr, "cannot allocate memory\n");
+    return 0;
+  }
+  t->tab = tab;
+  t->size = ALLOC_SIZE;
+  t ->nb_elem = 0;
+  return t;
+}
+
+int* numbers_table(Table *table){
+  Table t = *table;
+  return t->tab;
+}
+
+//
+// Ajout dans un tableau (ajustable)
+// (Le rÃ©sultat est le nombre d'occurences de elt)
+
+static int add_word(Table *table, int index, int my_nb) {
+  Table T           = *table;
+  int *numbers = T->tab;
+  int i, nb        = T->nb_elem;
+  int size         = T->size;
+
+  if (nb == size) {
+    // La table est pleine, la "rallonger" avant d'essayer d'insÃ©rer str
+    size *= 1.5;
+    numbers = realloc(numbers, size*sizeof(int));
+
+    if (!numbers) {
+      fprintf(stderr, "cannot reallocate memory\n");
+      return 0;
+    }
+
+    // conserver les nouvelles valeurs dans la table
+    T->tab = numbers;
+    T->size  = size;
+  }
+
+  // DÃ©caler l'intervalle [i .. nb[ d'une case Ã  droite
+  for (i=nb; i > index; i--) {
+    numbers[i] = numbers[i-1];
+  }
+
+  // InsÃ©rer le nouveau number Ã  la position index
+  numbers[index]= my_nb;
+
+  // On a un number de plus dans la table
+  T->nb_elem += 1;
+
+  return 1;                     // car ce number apparaît une fois
+}
+
+//
+// Destruction d'une table
+//
+void detruire_table(Table *table) {
+  Table T = *table;
+
+
+
+  // libÃ©rer le tableau de numbers (le tableau allouÃ© dans le t_table)
+  free(T->tab);
+
+  //libÃ©rer la table elle-mÃªme
+  free(T);
+
+  *table = NULL; // pas vraiment utile, mais pourquoi pas?
+}
+
+
+int ajouter_table(Table *table, int elt) {
+  Table T          = *table;
+
+
+
+  // Si on est là , ajouter une un nouvel élément à mettre à la fin
+  return add_word(table, T->nb_elem, elt);
+}
 
 int elem_neutre(char op)
 {
@@ -83,7 +244,6 @@ void descente(int *b, int *a, int taille, char op)
                 }
                 else
                 {
-
                     b[j] = operation(b[(j - 1) / 2], a[j - 1], op);
                 }
             }
@@ -164,10 +324,10 @@ int *create_copieTable(int *a, int taille, char op)
 {
 
     int *tab_to_ret = (int *)malloc(sizeof(int *) * (pow(2, log2(taille) + 1) - 1));
-    #pragma omp parallel for
+    //#pragma omp parallel for
     for (int i = 0; i < 2 * taille - 1; i++)
         tab_to_ret[i] = elem_neutre(op);
-    #pragma omp parallel for
+    //#pragma omp parallel for
     for (int i = 0; i < taille; i++)
     {
 
@@ -226,10 +386,10 @@ void remplir(int *t1, int *t2, int *t, int n1, int n2)
 
 
 void initialize(int*a_b_i, int * tabi,int ni, char op){
-    #pragma omp parallel for
+    //#pragma omp parallel for
     for (int i = 0; i < 2 * ni - 1; i++)
         a_b_i[i] = elem_neutre(op);
-    #pragma omp parallel for
+    //#pragma omp parallel for
     for (int i = 0; i < ni; i++)
     {
        a_b_i[(ni - 1) + i] = tabi[i];
@@ -264,7 +424,7 @@ int main(int argc, char **argv)
         int n2;
        
         int i = 0, j = 0, nb_elements = 0;
-        do
+        /*do
         {
             ch = fgetc(fp);
             buff[j++]=ch;
@@ -274,19 +434,21 @@ int main(int argc, char **argv)
                 j = 0;
             }
         }while(ch!=EOF);    
-        int tab[nb_elements];
         fseek(fp, 0, SEEK_SET);
-        j = 0;
+        j = 0;*/
+        Table dyn_table = creer_table();
         do
         {
             ch = fgetc(fp);
             buff[j++]=ch;
             if(ch==' ' || ch=='\t' || ch == '\n'){
+                nb_elements++;
                 buff[j] = '\0';
-                tab[i++] = atoi(buff);
+                int value = atoi(buff);
+                ajouter_table(&dyn_table, value);
                 j = 0;
             }
-        }while(ch!=EOF); 
+        }while(ch!=EOF);
         fclose(fp);
         int value_test_log2 = (int)log2(nb_elements);
         int reste = nb_elements - pow(2, value_test_log2);
@@ -319,10 +481,11 @@ int main(int argc, char **argv)
             printf("%d ", tab[i]);
         }
         printf("\n");*/
+        int *tab = numbers_table(&dyn_table);
         int tab1[n1];
         int tab2[n2];
 
-        remplir(tab1, tab2, tab, n1, n2);
+        remplir(tab1, tab2, tab , n1, n2);
         /*printf("tab1 : \t");
         for(int i = 0; i<n1; i++){
             printf("%d ", tab1[i]);
@@ -506,9 +669,10 @@ int main(int argc, char **argv)
          * for 1 <= i <= n do in parallel
         */
         int M[nb_elements];
+        
         int maximum_val = elem_neutre('m');
         int index_of_max_val = -1,nb_element_sub_tab = 0;
-        #pragma omp parallel for
+        //#pragma omp parallel for
         for(int i = 0;i<nb_elements;i++){
             Ms[i] = pmax[i] - ssum[i] + tab[i];
             Mp[i] = smax[i] - psum[i] + tab[i];
@@ -517,26 +681,36 @@ int main(int argc, char **argv)
                 index_of_max_val = i;
                 maximum_val = value;
             }
-            if(value == maximum_val){
+            if(value == maximum_val){ // it won't incremented if next elements su
                 nb_element_sub_tab++; 
             }
+            else
             M[i] = value;
         }
+        int index_of_zeros = find_sum_zero_index(tab,nb_elements, index_of_max_val);
+        //printf("index_of_zeros = %d\nnb_element_sub_tab = %d\n",index_of_zeros ,nb_element_sub_tab);
+        if(index_of_zeros>0 && index_of_zeros<nb_element_sub_tab)nb_element_sub_tab = index_of_zeros;
         /*printf("M : \t");
         for(int i =0;i<nb_elements;i++)printf("%d ", M[i]);
         printf("\n");*/
 
         i = index_of_max_val;
+        printf("%d ",maximum_val);
         while (i<nb_element_sub_tab)
         {
-            printf("%d ", tab[i]);
+            if(i<nb_element_sub_tab-1)printf("%d ", tab[i]);
+            else printf("%d\n", tab[i]);
             i++;
         }
         
-
-
-
-
+        free(a1);
+        free(b1);
+        if (reste != 0)
+        {
+            free(b2);
+            free(a2);
+        }
+        detruire_table(&dyn_table);
         return 0;
     }
 }

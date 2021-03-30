@@ -13,9 +13,9 @@ COMPILER = gcc
 LINKER = gcc
 
 #options for linker and compiler
-FLAGS =-Wall -lm #-fopenmp
+FLAGS =-Wall -std=gnu99 -lm -fopenmp
 
-EXE_NAME= output
+EXE_NAME= output.mp
 
 #can have several ones separated by spaces, only cpp files
 SOURCES = francis.c
