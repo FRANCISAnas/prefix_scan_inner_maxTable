@@ -51,7 +51,7 @@ int find_sum_zero_index(int* tab, int size, int index_of_max){
         while(j>0){
             if(tab[i]<0)count_negative+=tab[i];
             sum +=tab[j];
-            if(sum == 0 && abs(count_negative) == the_number && j>index_of_max)index_to_ret = j;
+            if(sum == 0 && abs(count_negative) == the_number && j>=index_of_max)index_to_ret = j;
             j--;
         }
     }
@@ -60,12 +60,12 @@ int find_sum_zero_index(int* tab, int size, int index_of_max){
         while(j>0){
             if(tab[i]>0)count_positive+=tab[i];
             sum +=tab[j];
-            if(sum == 0 && count_positive == the_number && j>index_of_max)index_to_ret = j;
+            if(sum == 0 && count_positive == the_number && j>=index_of_max)index_to_ret = j;
             j--;
         }
     }
     
-    return index_to_ret>index_of_max?index_to_ret:-1;
+    return index_to_ret>=index_of_max?index_to_ret:-1;
 }
 
 
@@ -248,30 +248,7 @@ void descente(int *b, int *a, int taille, char op)
                 }
             }
         }
-    /*}
-    else{
-        b[m+1] = 0;
-
-        for (int l = m; l >= 1; l--)
-        {
-            //printf("l = %d\n", l);
-            int maxi = pow(2, l + 1);
-            #pragma omp parallel for
-            for (int j = maxi; j >= pow(2, l) - 1; j--)
-            {
-                //printf("\tj = %d\n",j);
-                if ((j + 1) % 2 == 0)
-                {
-                    b[j] = b[(j - 1) / 2];
-                }
-                else
-                {
-
-                    b[j] = operation(b[(j - 1) / 2], a[j - 1], op);
-                }
-            }
-        }
-    }*/
+    
 }
 
 
@@ -300,24 +277,6 @@ void montee(int *tab, int taille, char op)
             }
             //printf("\n");
         }
-    /*}
-    else{
-        //printf("m = %d\n",m);
-        for (int l = 0; l <= m - 1; l++)
-        {
-            printf("l = %d:\n ",l);
-            int max = pow(2, l + 1) - 1;
-            #pragma omp parallel for
-            for (int j = max-1; j >= pow(2, l) - 1; j--)
-            {
-                printf("\tj = %d\n",j);
-                printf("\ttab[%d], tab[%d] = %d, %d",2*j+1,2*j+2, tab[2*j+1], tab[2*j+2]);
-                tab[j] = operation(tab[2 * j + 1], tab[2 * j + 2], op);
-                printf("\ttab[%d] = %d\n", j, tab[j]);
-            }
-            printf("\n");
-        }
-    }*/
 }
 
 int *create_copieTable(int *a, int taille, char op)
@@ -352,16 +311,7 @@ void final(int *b, int *a, int taille, char op)
             //printf("b[%d] = %d\n", j, b[j]);
         }
         //printf("\n");
-    /*}
-    else{
-        #pragma omp parallel for
-        for (int j = maxi-1; j >= pow(2, m) - 1; j--)
-        {
-            //printf("j = %d\t",j);
-            b[j] = operation(b[j], a[j], op);
-            //printf("b[%d] = %d\n", j, b[j]);
-        }
-    }*/
+
 }
 
 
@@ -652,7 +602,7 @@ int main(int argc, char **argv)
             pmax[nb_elements-1-i] = b1[size_b1-1-i];
             i++;
         }
-        /*printf("psum : \t");
+        printf("psum : \t");
         for(int i =0;i<nb_elements;i++)printf("%d ", psum[i]);
         printf("\n");
         printf("ssum : \t");
@@ -663,42 +613,49 @@ int main(int argc, char **argv)
         printf("\n");
         printf("pmax : \t");
         for(int i =0;i<nb_elements;i++)printf("%d ", pmax[i]);
-        printf("\n");*/
+        printf("\n");
         
         /**
          * for 1 <= i <= n do in parallel
         */
         int M[nb_elements];
         
-        int maximum_val = elem_neutre('m');
-        int index_of_max_val = -1,nb_element_sub_tab = 0;
-        //#pragma omp parallel for
+        int maximum_val = elem_neutre('m'), index_of_max_start = -1, end_index = 0;
+        #pragma omp parallel for
         for(int i = 0;i<nb_elements;i++){
             Ms[i] = pmax[i] - ssum[i] + tab[i];
             Mp[i] = smax[i] - psum[i] + tab[i];
             int value = Ms[i] + Mp[i] - tab[i];
-            if(value>maximum_val){
-                index_of_max_val = i;
-                maximum_val = value;
-            }
-            if(value == maximum_val){ // it won't incremented if next elements su
-                nb_element_sub_tab++; 
-            }
-            else
             M[i] = value;
+            if(M[i]>maximum_val)maximum_val = M[i];
         }
-        int index_of_zeros = find_sum_zero_index(tab,nb_elements, index_of_max_val);
-        //printf("index_of_zeros = %d\nnb_element_sub_tab = %d\n",index_of_zeros ,nb_element_sub_tab);
-        if(index_of_zeros>0 && index_of_zeros<nb_element_sub_tab)nb_element_sub_tab = index_of_zeros;
-        /*printf("M : \t");
+        //#pragma omp parallel for
+        for(int i = 0;i<nb_elements;i++){
+          if(M[i] == maximum_val){
+            index_of_max_start = i;
+            end_index = index_of_max_start;
+            while(M[end_index] == maximum_val){
+              end_index++;
+            }
+              break; 
+          }
+           
+        }
+        i = index_of_max_start;
+  
+        int index_of_zeros = find_sum_zero_index(tab,nb_elements, index_of_max_start);
+        //printf("index_of_max_val = %d\nnb_element_sub_tab = %d\n",index_of_max_start ,nb_element_sub_tab);
+        //if(index_of_zeros>0 && index_of_zeros<end_index)end_index = index_of_zeros;
+        printf("M : \t");
         for(int i =0;i<nb_elements;i++)printf("%d ", M[i]);
-        printf("\n");*/
-
-        i = index_of_max_val;
-        printf("%d ",maximum_val);
-        while (i<nb_element_sub_tab)
+        printf("\n");
+        printf("i = %d\n",i);
+        printf("maximum_val = %d\n",maximum_val);
+        printf("end_index = %d\n",end_index);
+        printf("%d ", M[i]);
+        while (i<end_index/*nb_element_sub_tab*/)
         {
-            if(i<nb_element_sub_tab-1)printf("%d ", tab[i]);
+            if(i<end_index-1)printf("%d ", tab[i]);
             else printf("%d\n", tab[i]);
             i++;
         }
