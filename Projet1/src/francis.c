@@ -10,11 +10,11 @@ void montee(int *tab, int taille, char op);
 int operation(int, int, char);
 int find_sum_zero_index(int*, int, int);
 
-
+/*
 int find_sum_zero_index(int* tab, int size, int index_of_max){
      /**
      * 1- find the number that repeats in the end
-    */
+    
 
     int sum = tab[size-1];
     int the_number, index_to_ret= -1, count_positive = 0, count_negative = 0;
@@ -66,7 +66,7 @@ int find_sum_zero_index(int* tab, int size, int index_of_max){
     }
     
     return index_to_ret>=index_of_max?index_to_ret:-1;
-}
+}*/
 
 
 typedef struct t_table *Table;
@@ -228,7 +228,7 @@ void descente(int *b, int *a, int taille, char op)
 {
     int m = log2(taille);
     //if(boolean){
-        b[0] = 0;
+        b[0] = elem_neutre(op);
 
         for (int l = 1; l < m + 1; l++)
         {
@@ -426,15 +426,16 @@ int main(int argc, char **argv)
         int n1 = pow(2, value_test_log2);
         
 
+        
+        printf("\n");
+        int *tab = numbers_table(&dyn_table);
+        int tab1[n1];
+        int tab2[n2];
         /*printf("tab : \t");
         for(int i = 0;i<nb_elements; i++){
             printf("%d ", tab[i]);
         }
         printf("\n");*/
-        int *tab = numbers_table(&dyn_table);
-        int tab1[n1];
-        int tab2[n2];
-
         remplir(tab1, tab2, tab , n1, n2);
         /*printf("tab1 : \t");
         for(int i = 0; i<n1; i++){
@@ -529,13 +530,6 @@ int main(int argc, char **argv)
         
         printf("new processing ...\n\n");*/
 
-        /*free(a1);
-        free(b1);
-        if (reste != 0)
-        {
-            free(b2);
-            free(a2);
-        }*/
         //we  store the current time in end
 
         //timeval is a struct with 2 parts for time, one in seconds and the other in
@@ -592,6 +586,7 @@ int main(int argc, char **argv)
         */
 
         initialize(a1, ssum, n1, op);
+        
         montee(a1, n1, op);
         initialize(b1, ssum, n1, op);
         copy(b1, a1, n1);
@@ -602,7 +597,7 @@ int main(int argc, char **argv)
             pmax[nb_elements-1-i] = b1[size_b1-1-i];
             i++;
         }
-        printf("psum : \t");
+        /*printf("psum : \t");
         for(int i =0;i<nb_elements;i++)printf("%d ", psum[i]);
         printf("\n");
         printf("ssum : \t");
@@ -613,7 +608,7 @@ int main(int argc, char **argv)
         printf("\n");
         printf("pmax : \t");
         for(int i =0;i<nb_elements;i++)printf("%d ", pmax[i]);
-        printf("\n");
+        printf("\n");*/
         
         /**
          * for 1 <= i <= n do in parallel
@@ -621,17 +616,17 @@ int main(int argc, char **argv)
         int M[nb_elements];
         
         int maximum_val = elem_neutre('m'), index_of_max_start = -1, end_index = 0;
-        #pragma omp parallel for
+        //#pragma omp parallel for
         for(int i = 0;i<nb_elements;i++){
             Ms[i] = pmax[i] - ssum[i] + tab[i];
             Mp[i] = smax[i] - psum[i] + tab[i];
-            int value = Ms[i] + Mp[i] - tab[i];
+            int value =Ms[i]+Mp[i]-tab[i];
             M[i] = value;
             if(M[i]>maximum_val)maximum_val = M[i];
         }
         //#pragma omp parallel for
         for(int i = 0;i<nb_elements;i++){
-          if(M[i] == maximum_val){
+          if(M[i] >= maximum_val){
             index_of_max_start = i;
             end_index = index_of_max_start;
             while(M[end_index] == maximum_val){
@@ -643,17 +638,17 @@ int main(int argc, char **argv)
         }
         i = index_of_max_start;
   
-        int index_of_zeros = find_sum_zero_index(tab,nb_elements, index_of_max_start);
+        //int index_of_zeros = find_sum_zero_index(tab,nb_elements, index_of_max_start);
         //printf("index_of_max_val = %d\nnb_element_sub_tab = %d\n",index_of_max_start ,nb_element_sub_tab);
         //if(index_of_zeros>0 && index_of_zeros<end_index)end_index = index_of_zeros;
-        printf("M : \t");
+        /*printf("M : \t");
         for(int i =0;i<nb_elements;i++)printf("%d ", M[i]);
         printf("\n");
         printf("i = %d\n",i);
         printf("maximum_val = %d\n",maximum_val);
-        printf("end_index = %d\n",end_index);
+        printf("end_index = %d\n",end_index);*/
         printf("%d ", M[i]);
-        while (i<end_index/*nb_element_sub_tab*/)
+        while (i<end_index)
         {
             if(i<end_index-1)printf("%d ", tab[i]);
             else printf("%d\n", tab[i]);

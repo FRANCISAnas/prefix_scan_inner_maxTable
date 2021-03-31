@@ -9,7 +9,7 @@ dataFolder="data/"
 binFolder="bin/"
 srcFolder="src/"
 
-datasets=[1,2,3,4,5,6]
+datasets=[1,2,3,4,5,6,7,8,9,10,11,12,13,14]
 
 def runDataset(name, i) :
     output=""
@@ -42,6 +42,7 @@ def runDataset(name, i) :
 
 
 def runProject(name) :
+    #print(datasets)
     result=""
     for d in datasets :
         result = result + ";" + runDataset(name, d)

@@ -13,7 +13,7 @@ COMPILER = gcc
 LINKER = gcc
 
 #options for linker and compiler
-FLAGS =-Wall -std=gnu99 -lm #-fopenmp
+FLAGS =-Wall -std=gnu99 -lm -fopenmp
 
 EXE_NAME= output.mp
 
