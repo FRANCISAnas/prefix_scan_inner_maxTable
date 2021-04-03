@@ -35,7 +35,7 @@ Project1/src/*.mp
 *.i*86
 *.x86_64
 *.hex
-
+.replit
 # Debug files
 *.dSYM/
 *.su

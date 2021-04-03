@@ -8,11 +8,11 @@ void descente(int *b, int *a, int taille, char op);
 void final(int *b, int *a, int taille, char op);
 void montee(int *tab, int taille, char op);
 int operation(int, int, char);
-int find_sum_zero_index(int*, int, int);
+//int find_sum_zero_index(int*, int, int);
 
 /*
 int find_sum_zero_index(int* tab, int size, int index_of_max){
-     /**
+     
      * 1- find the number that repeats in the end
     
 
@@ -84,16 +84,16 @@ struct t_table {                // ImplÃ©mentation avec un tableau
 //
 // Creation d'une table vide
 //
-Table creer_table(void) {
+Table creer_table(int alloc_size) {
   Table t         = malloc(sizeof(struct t_table));
-  int *tab = malloc(ALLOC_SIZE * sizeof(int));
+  int *tab = malloc(alloc_size * sizeof(int));
 
   if (!t || !tab) {
      fprintf(stderr, "cannot allocate memory\n");
     return 0;
   }
   t->tab = tab;
-  t->size = ALLOC_SIZE;
+  t->size = alloc_size;
   t ->nb_elem = 0;
   return t;
 }
@@ -129,6 +129,7 @@ static int add_word(Table *table, int index, int my_nb) {
   }
 
   // DÃ©caler l'intervalle [i .. nb[ d'une case Ã  droite
+  //#pragma omp parallel for
   for (i=nb; i > index; i--) {
     numbers[i] = numbers[i-1];
   }
@@ -148,9 +149,7 @@ static int add_word(Table *table, int index, int my_nb) {
 void detruire_table(Table *table) {
   Table T = *table;
 
-
-
-  // libÃ©rer le tableau de numbers (le tableau allouÃ© dans le t_table)
+  // libérer le tableau de numbers (le tableau allouÃ© dans le t_table)
   free(T->tab);
 
   //libÃ©rer la table elle-mÃªme
@@ -160,13 +159,19 @@ void detruire_table(Table *table) {
 }
 
 
-int ajouter_table(Table *table, int elt) {
-  Table T          = *table;
-
-
-
+int ajouter_table(Table *table, int elt, int index) {
   // Si on est là , ajouter une un nouvel élément à mettre à la fin
-  return add_word(table, T->nb_elem, elt);
+  return add_word(table, index, elt);
+}
+
+void reverse(int *table, int n){
+  //#pragma omp parallel for
+  for(int i = 0; i<n/2;i++){
+    int tmp = table[i];
+    table[i] = table[n-1-i];
+    table[n-1-i] = tmp;
+  }
+
 }
 
 int elem_neutre(char op)
@@ -248,7 +253,6 @@ void descente(int *b, int *a, int taille, char op)
                 }
             }
         }
-    
 }
 
 
@@ -300,13 +304,15 @@ void final(int *b, int *a, int taille, char op)
 {
     int m = log2(taille);
     int maxi = pow(2, m + 1) - 1;
+    
+    
     //if(boolean){
 
-        #pragma omp parallel for
+        //#pragma omp parallel for
         for (int j = pow(2, m) - 1; j < maxi; j++)
         {
-            //printf("a[%d] = %d, b[%d] = %d " ,j, a[j],j, b[j]);
-            //printf("j = %d\t",j);
+            /*printf("j = %d\t",j);
+            printf("%d, %d\n" ,a[j], b[j]);*/
             b[j] = operation(b[j], a[j], op);
             //printf("b[%d] = %d\n", j, b[j]);
         }
@@ -316,34 +322,62 @@ void final(int *b, int *a, int taille, char op)
 
 
 void inverse_tab(int* t1, int* t, int n){
+    #pragma omp parallel for
     for (int i = 0; i<n; i++)t1[n-1-i] = t[i];
 }
 
-void remplir(int *t1, int *t2, int *t, int n1, int n2)
+void remplir(Table *t1, Table *t2, Table *tab, int n1, int n2)
 {
+    Table tab_t1= *t1;
+    Table tab_t2= *t2;
+    Table t = *tab;
     int index_on_t = 0;
     //#pragma omp parallel for
     for (int i = 0; i < n1; i++)
     {
-        t1[i] = t[index_on_t++];
+        //if(tab_t1->size<n1){
+          ajouter_table(t1, t->tab[index_on_t++], i);
+        /*}
+        else{
+          
+          tab_t1->tab[i] = t->tab[index_on_t++];
+        }*/
     }
     //#pragma omp parallel for
     for (int i = 0; i < n2; i++)
     {
-        t2[i] = t[index_on_t++];
+        //if(tab_t2->size<n2){
+          ajouter_table(t2, t->tab[index_on_t++], i);
+        /*}
+        else{
+          tab_t2->tab[i] = t->tab[index_on_t++];
+        }*/
     }
 }
 
 
-void initialize(int*a_b_i, int * tabi,int ni, char op){
+void initialize(Table *a_b_i, Table * tabi,int ni, char op){
+    
+    Table t = *tabi;
+    Table t_a_b_i = *a_b_i;
+    int double_size= 2 * ni - 1;
+    
     //#pragma omp parallel for
-    for (int i = 0; i < 2 * ni - 1; i++)
-        a_b_i[i] = elem_neutre(op);
-    //#pragma omp parallel for
+    for (int i = 0; i <double_size ; i++){
+        if(t_a_b_i->size<double_size){
+          ajouter_table(a_b_i, elem_neutre(op), i);
+        }
+        else{
+          t_a_b_i->tab[i] = elem_neutre(op);
+        }
+    }
+    //printf("op = %c\n",op);
+   // #pragma omp parallel for
     for (int i = 0; i < ni; i++)
     {
-       a_b_i[(ni - 1) + i] = tabi[i];
+        t_a_b_i->tab[(ni - 1) + i] =  t->tab[i];
     }
+    //printf("INITITALIZATION finishe !!!!");
 }
 
 void copy(int *b, int *a, int taille)
@@ -368,11 +402,9 @@ int main(int argc, char **argv)
         char ch;
 
         char buff[50];
-
-
         char op = '+';
         int n2;
-       
+
         int i = 0, j = 0, nb_elements = 0;
         /*do
         {
@@ -386,16 +418,16 @@ int main(int argc, char **argv)
         }while(ch!=EOF);    
         fseek(fp, 0, SEEK_SET);
         j = 0;*/
-        Table dyn_table = creer_table();
+        Table dyn_table = creer_table(ALLOC_SIZE);
         do
         {
             ch = fgetc(fp);
             buff[j++]=ch;
             if(ch==' ' || ch=='\t' || ch == '\n'){
-                nb_elements++;
+                
                 buff[j] = '\0';
                 int value = atoi(buff);
-                ajouter_table(&dyn_table, value);
+                ajouter_table(&dyn_table, value, nb_elements++);
                 j = 0;
             }
         }while(ch!=EOF);
@@ -405,7 +437,6 @@ int main(int argc, char **argv)
         /**
          * Compute sum-prefix of Q and store them in array PSUM
         */
-        //printf("reste = %d \n", reste);
         if (reste != 0)
         {
             if (isPowerOfTwo(reste) == 1)
@@ -425,18 +456,18 @@ int main(int argc, char **argv)
         }
         int n1 = pow(2, value_test_log2);
         
-
+        //int *tab = numbers_table(&dyn_table);
+        Table tab1_bis = creer_table(ALLOC_SIZE);
         
-        printf("\n");
-        int *tab = numbers_table(&dyn_table);
-        int tab1[n1];
-        int tab2[n2];
+        
+        Table tab2_bis = creer_table(ALLOC_SIZE);
         /*printf("tab : \t");
         for(int i = 0;i<nb_elements; i++){
             printf("%d ", tab[i]);
         }
         printf("\n");*/
-        remplir(tab1, tab2, tab , n1, n2);
+        remplir(&tab1_bis, &tab2_bis, &dyn_table , n1, n2);
+        
         /*printf("tab1 : \t");
         for(int i = 0; i<n1; i++){
             printf("%d ", tab1[i]);
@@ -448,23 +479,23 @@ int main(int argc, char **argv)
         }
         printf("\n");*/
         int size_a1 = pow(2, log2(n1) + 1) - 1;
-        int *a1 = malloc(sizeof(int) * size_a1); //create_copieTable(tab1, n1, op);
-        initialize(a1,tab1, n1, op);
-
-        montee(a1, n1, op);
+        
+        Table a1 = creer_table(ALLOC_SIZE);//malloc(sizeof(int) * size_a1); //create_copieTable(tab1, n1, op);
+        initialize(&a1,&tab1_bis, n1, op);
+        montee(a1->tab, n1, op);
         int size_a2 = 0;
         if (reste != 0)
             size_a2 = pow(2, log2(n2) + 1) - 1;
-        int *a2;
+        Table a2;
         if (reste != 0)
         {
-            a2 = malloc(sizeof(int) * size_a2);
-            initialize(a2, tab2, n2, op);
-            montee(a2, n2, op);
+            a2 = creer_table(ALLOC_SIZE);//malloc(sizeof(int) * size_a2);
+            initialize(&a2, &tab2_bis, n2, op);
+            montee(a2->tab, n2, op);
         }
         /*printf("a1 :\t");
         for(int i = 0; i<2*n1-1; i++){
-            printf("%d ", a1[i]);
+            printf("%d ", a1->tab[i]);
         }
         printf("\n");
         printf("a2 :\t");
@@ -473,52 +504,54 @@ int main(int argc, char **argv)
         }
         printf("\n");*/
         int size_b1 = pow(2, log2(n1) + 1) - 1;
-        int *b1 = malloc(sizeof(int) * size_b1); //create_copieTable(tab1, n1, op);
-        initialize(b1,tab1,n1,op);
+        Table b1 = creer_table(ALLOC_SIZE);// malloc(sizeof(int) * size_b1); //create_copieTable(tab1, n1, op);
+        
+        initialize(&b1,&tab1_bis,n1,op);
+        
         int size_b2 = 0;
         if (reste != 0)
             size_b2 = pow(2, log2(n2) + 1) - 1;
-        int *b2;
+        Table b2;
         if (reste != 0)
         {
-           b2 = malloc(sizeof(int) * size_b2);
+            b2 = creer_table(ALLOC_SIZE);// malloc(sizeof(int) * size_b2);
             //b2 = create_copieTable(tab2, n2, op);
-            initialize(b2, tab2, n2,op);
-            copy(b2, a2, n2);
+            initialize(&b2, &tab2_bis, n2,op);
+            copy(b2->tab, a2->tab, n2);
         }
-        copy(b1, a1, n1);
+        copy(b1->tab, a1->tab, n1);
         /*printf("b1 : \t");
         for(int i = 0; i<2*n1-1; i++){
-            printf("%d ", b1[i]);
+            printf("%d ", b1->tab[i]);
         }
         printf("\n");
         
         printf("b2 : \t");
         for(int i = 0; i<2*n2-1; i++){
-            printf("%d ",b2[i]);
+            printf("%d ",b2->tab[i]);
         }
         printf("\n");*/
 
-        descente(b1, a1, n1, op);
+        descente(b1->tab, a1->tab, n1, op);
         /*printf("après descente : b1 :\t");
         for(int i = 0; i<2*n1-1; i++){
-            printf("%d ", b1[i]);
+            printf("%d ", b1->tab[i]);
         }*/
-        final(b1, a1, n1, op);
+        final(b1->tab, a1->tab, n1, op);
+        
         if (reste != 0)
         {
-            descente(b2, a2, n2, op);
+            descente(b2->tab, a2->tab, n2, op);
             /*printf("\naprès descente :b2 :\t");
             for(int i = 0; i<2*n2-1; i++){
                 printf("%d ",b2[i]);
             }*/
-            final(b2, a2, n2, op);
+            final(b2->tab, a2->tab, n2, op);
         }
-
-        /*
-        printf("\naprès finale \b1 : ");
+        
+        /*printf("\naprès finale \b1 : ");
         for(int i = 0; i<2*n1-1; i++){
-            printf("%d ", b1[i]);
+            printf("%d ", b1->tab[i]);
         }
         printf("\n");
 
@@ -537,99 +570,106 @@ int main(int argc, char **argv)
         //the elapsed time
         /*printf("%ld\n", ((end.tv_sec * 1000000 + end.tv_usec)
 		  - (start.tv_sec * 1000000 + start.tv_usec)));*/
-        int psum [nb_elements];
-        int ssum[nb_elements];
-        int smax[nb_elements];
-        int pmax[nb_elements];
-        int Ms[nb_elements];
-        int Mp[nb_elements];
+        
+        Table psum = creer_table(ALLOC_SIZE);
+        Table ssum= creer_table(ALLOC_SIZE);
+        
+        Table pmax= creer_table(ALLOC_SIZE);
+        
+        
         i = 0;
         while(i<nb_elements){
-            psum[nb_elements-1-i] = b1[size_b1-1-i];
+           // printf("%d ",b1[size_b1-1-i]);
+            ajouter_table(&psum, b1->tab[size_b1-1-i],i); 
             i++;
         }
+        
+        
         /**
          * Compute sum-suffix of Q and store them in array SSUM
         */
-        int inverse_tab1[nb_elements];
-        inverse_tab(inverse_tab1, tab, nb_elements);
-        initialize(a1, inverse_tab1, n1, op);
-        montee(a1, n1, op);
-        initialize(b1, inverse_tab1, n1, op);
-        copy(b1, a1, n1);
-        descente(b1, a1, n1, op);
-        final(b1, a1, n1, op);
+        reverse(tab1_bis->tab, nb_elements);
+        initialize(&a1, &tab1_bis, n1, op);
+        montee(a1->tab, n1, op);
+        initialize(&b1, &dyn_table, n1, op);
+        copy(b1->tab, a1->tab, n1);
+        descente(b1->tab, a1->tab, n1, op);
+        final(b1->tab, a1->tab, n1, op);
+        
         i = 0;
         while(i<nb_elements){
-            ssum[i] = b1[size_b1-1-i];
+            ajouter_table(&ssum, b1->tab[size_b1-1-i],i); 
             i++;
         }
         op = 'm';
         /**
-         * Compute max-suffix of PSUM and store them in array SMAX*/    
-        
-        int inv_psum[nb_elements];
-        inverse_tab(inv_psum, psum, nb_elements);
-        initialize(a1, inv_psum, n1, op);
-        montee(a1, n1, op);
-        initialize(b1, inv_psum, n1, op);
-        copy(b1, a1, n1);
-        descente(b1, a1, n1, op);
-        final(b1, a1, n1, op);
+         * Compute max-suffix of PSUM and store them in array SMAX*/
+
+        //reverse(psum->tab, nb_elements);
+
+        initialize(&a1, &psum, n1, op);
+
+        montee(a1->tab, n1, op);
+
+        initialize(&b1, &psum, n1, op);
+        copy(b1->tab, a1->tab, n1);
+        descente(b1->tab, a1->tab, n1, op);
+        final(b1->tab, a1->tab, n1, op);
+
         i=0;
+        Table smax= creer_table(ALLOC_SIZE);
         while(i<nb_elements){
-            smax[i] = b1[size_b1-1-i];
+            ajouter_table(&smax,b1->tab[size_b1-1-i],i); 
             i++;
         }
         /**
          * Compute max-prefix of SSUM and store them in array PMAX
         */
 
-        initialize(a1, ssum, n1, op);
-        
-        montee(a1, n1, op);
-        initialize(b1, ssum, n1, op);
-        copy(b1, a1, n1);
-        descente(b1, a1, n1, op);
-        final(b1, a1, n1, op);
+        initialize(&a1, &ssum, n1, op);
+        montee(a1->tab, n1, op);
+        initialize(&b1, &ssum, n1, op);
+        copy(b1->tab, a1->tab, n1);
+        descente(b1->tab, a1->tab, n1, op);
+        final(b1->tab, a1->tab, n1, op);
+
         i=0;
         while(i<nb_elements){
-            pmax[nb_elements-1-i] = b1[size_b1-1-i];
+            ajouter_table(&pmax, b1->tab[size_b1-1-i],i); 
             i++;
         }
+        reverse(psum->tab, nb_elements);
+        reverse(pmax->tab, nb_elements);
         /*printf("psum : \t");
-        for(int i =0;i<nb_elements;i++)printf("%d ", psum[i]);
+        for(int i =0;i<nb_elements;i++)printf("%d ", psum->tab[i]);
         printf("\n");
         printf("ssum : \t");
-        for(int i =0;i<nb_elements;i++)printf("%d ", ssum[i]);
+        for(int i =0;i<nb_elements;i++)printf("%d ", ssum->tab[i]);
         printf("\n");
         printf("smax : \t");
-        for(int i =0;i<nb_elements;i++)printf("%d ", smax[i]);
+        for(int i =0;i<nb_elements;i++)printf("%d ", smax->tab[i]);
         printf("\n");
         printf("pmax : \t");
-        for(int i =0;i<nb_elements;i++)printf("%d ", pmax[i]);
-        printf("\n");*/
+        for(int i =0;i<nb_elements;i++)printf("%d ", pmax->tab[i]);
+        printf("\n");
+        /*
         
-        /**
          * for 1 <= i <= n do in parallel
         */
-        int M[nb_elements];
+        Table M = creer_table(ALLOC_SIZE);
         
         int maximum_val = elem_neutre('m'), index_of_max_start = -1, end_index = 0;
         //#pragma omp parallel for
         for(int i = 0;i<nb_elements;i++){
-            Ms[i] = pmax[i] - ssum[i] + tab[i];
-            Mp[i] = smax[i] - psum[i] + tab[i];
-            int value =Ms[i]+Mp[i]-tab[i];
-            M[i] = value;
-            if(M[i]>maximum_val)maximum_val = M[i];
+            ajouter_table(&M, pmax->tab[i] - ssum->tab[i]+smax->tab[i] - psum->tab[i] + dyn_table->tab[i], i);
+            if(M->tab[i]>maximum_val)maximum_val = M->tab[i];
         }
         //#pragma omp parallel for
         for(int i = 0;i<nb_elements;i++){
-          if(M[i] >= maximum_val){
+          if(M->tab[i] == maximum_val){
             index_of_max_start = i;
             end_index = index_of_max_start;
-            while(M[end_index] == maximum_val){
+            while(M->tab[end_index] == maximum_val){
               end_index++;
             }
               break; 
@@ -637,24 +677,22 @@ int main(int argc, char **argv)
            
         }
         i = index_of_max_start;
-  
         //int index_of_zeros = find_sum_zero_index(tab,nb_elements, index_of_max_start);
         //printf("index_of_max_val = %d\nnb_element_sub_tab = %d\n",index_of_max_start ,nb_element_sub_tab);
         //if(index_of_zeros>0 && index_of_zeros<end_index)end_index = index_of_zeros;
         /*printf("M : \t");
         for(int i =0;i<nb_elements;i++)printf("%d ", M[i]);
         printf("\n");
-        printf("i = %d\n",i);
+        /*printf("i = %d\n",i);
         printf("maximum_val = %d\n",maximum_val);
         printf("end_index = %d\n",end_index);*/
-        printf("%d ", M[i]);
+        printf("%d ", M->tab[i]);
         while (i<end_index)
         {
-            if(i<end_index-1)printf("%d ", tab[i]);
-            else printf("%d\n", tab[i]);
+            if(i<end_index-1)printf("%d ", dyn_table->tab[i]);
+            else printf("%d\n", dyn_table->tab[i]);
             i++;
         }
-        
         free(a1);
         free(b1);
         if (reste != 0)
@@ -662,7 +700,13 @@ int main(int argc, char **argv)
             free(b2);
             free(a2);
         }
+        detruire_table(&tab1_bis);
+        detruire_table(&tab2_bis);
         detruire_table(&dyn_table);
+        detruire_table(&psum);
+        detruire_table(&ssum);
+        detruire_table(&pmax);
+        detruire_table(&smax);
         return 0;
     }
 }
