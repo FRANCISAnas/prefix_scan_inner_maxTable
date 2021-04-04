@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <omp.h>
 #include <limits.h>
 
 // The implementation of the dynamic table was found on the
@@ -117,7 +116,6 @@ int ajouter_table(Table *table, int elt, int index) {
 }
 
 void reverse(long *table, int n){
-    #pragma omp parallel for
     for(int i = 0; i<n/2;i++){
         int tmp = table[i];
         table[i] = table[n-1-i];
@@ -149,16 +147,15 @@ long elem_neutre(char op)
             exit(EXIT_FAILURE);
     }
 }
-// O(1)
+
 void padding(Table* table, char op){
     Table t = *table;
-    #pragma omp parallel for
     for(int i = t->nb_elem;i<=t->size;i++){
         t->tab[i]=elem_neutre(op);
     }
 }
 
-// O(1)
+// O(1) sans parallèle
 long operation( long val1, long val2, char op)
 {
     switch (op)
@@ -187,18 +184,20 @@ long operation( long val1, long val2, char op)
             exit(EXIT_FAILURE);
     }
 }
-// O(log(N)) in parallel & O(Nlog(N)) in normal
+// O(log(N)) en parallel et O(Nlog(N)) en normal
 void descente( long *b, long *a, int taille, char op)
 {
     int m = log2(taille);
+    //if(boolean){
     b[0] = elem_neutre(op);
 
     for (int l = 1; l < m + 1; l++)
     {
+        //printf("l = %d\n", l);
         int maxi = pow(2, l + 1);
-        #pragma omp parallel for
         for (int j = pow(2, l) - 1; j < maxi - 1; j++)
         {
+            //printf("\tj = %d\n",j);
             if ((j + 1) % 2 == 0)
             {
                 b[j] = b[(j - 1) / 2];
@@ -212,33 +211,44 @@ void descente( long *b, long *a, int taille, char op)
 }
 
 
-//O(log(N) N is the size of input tab (here it is taille)
+
 void montee( long *tab, int taille, char op)
 {
     int m = log2(taille);
+
+    //printf("m = %d\n",m);
     for (int l = m - 1; l >= 0; l--)
     {
+        //printf("l = %d:\n ",l);
         int max = pow(2, l + 1) - 1;
-        #pragma omp parallel for
         for (int j = pow(2, l) - 1; j < max; j++)
+        {
+            //printf("\tj = %d\n",j);
+            //printf("\ttab[%d], tab[%d] = %d, %d",2*j+1,2*j+2, tab[2*j+1], tab[2*j+2]);
             tab[j] = operation(tab[2 * j + 1], tab[2 * j + 2], op);
+            //printf("\ttab[%d] = %d\n", j, tab[j]);
+        }
+        //printf("\n");
     }
 }
 
-//O(1) because one loop in parallel each process compute one case of the table b.
+
 void final(long *b, long *a, int taille, char op)
 {
     int m = log2(taille);
     int maxi = pow(2, m + 1) - 1;
 
-    #pragma omp parallel for
     for (int j = pow(2, m) - 1; j < maxi; j++)
+    {
+        /*printf("j = %d\t",j);
+        printf("%d, %d\n" ,a[j], b[j]);*/
         b[j] = operation(b[j], a[j], op);
-
+        //printf("b[%d] = %d\n", j, b[j]);
+    }
+    //printf("\n");
 }
 
-// Amortize in O(1)
-// O(N)
+
 void remplir(Table *t1, Table *tab, int n1)
 {
     Table t = *tab;
@@ -249,7 +259,7 @@ void remplir(Table *t1, Table *tab, int n1)
     }
 }
 
-// O(N)
+
 void initialize(Table *a_b_i, Table * tabi,int ni, char op){
 
     Table t = *tabi;
@@ -264,16 +274,14 @@ void initialize(Table *a_b_i, Table * tabi,int ni, char op){
             t_a_b_i->tab[i] = elem_neutre(op);
         }
     }
-    #pragma omp parallel for
     for (int i = 0; i < ni; i++)
     {
         t_a_b_i->tab[(ni - 1) + i] =  t->tab[i];
     }
 }
-//O(1) because in parallel.
+
 void copy( long *b, long *a, int taille)
 {
-    #pragma omp parallel for
     for (int i = 0; i < 2 * taille - 1; i++)
         b[i] = a[i];
 }
@@ -297,7 +305,6 @@ int main(int argc, char **argv)
         char ch, buff[50], op = '+';
         int i, j = 0, nb_elements = 0;
         Table dyn_table = creer_table(ALLOC_SIZE);
-        // filling dyn_table with elements of fp file is O(N).
         do
         {
             ch = fgetc(fp);
@@ -320,8 +327,7 @@ int main(int argc, char **argv)
         */
 
         int n1 = pow(2, integer_part_of_log2);
-        if (reste != 0) // padding dyn_table if nb_elements is not a power of 2.
-            // O(1) because loop in parallel.
+        if (reste != 0)
         {
             padding(&dyn_table, op);
             nb_elements = dyn_table->size;
@@ -401,13 +407,24 @@ int main(int argc, char **argv)
         }
         reverse(psum->tab, nb_elements);
         reverse(pmax->tab, nb_elements);
-
+        /*printf("psum : \t");
+        for(int i =0;i<nb_elements;i++)printf("%ld ", psum->tab[i]);
+        printf("\n");
+        printf("ssum : \t");
+        for(int i =0;i<nb_elements;i++)printf("%ld ", ssum->tab[i]);
+        printf("\n");
+        printf("smax : \t");
+        for(int i =0;i<nb_elements;i++)printf("%ld ", smax->tab[i]);
+        printf("\n");
+        printf("pmax : \t");
+        for(int i =0;i<nb_elements;i++)printf("%ld ", pmax->tab[i]);
+        printf("\n");
+        */
         Table M = creer_table(nb_elements);
 
         long maximum_val = elem_neutre('m');
         int index_of_max_start = -1, end_index = 0;
-        // O(1) loop in parallel
-        #pragma omp parallel for
+
         for(int i = 0;i<nb_elements;i++){
             M->tab[i] = pmax->tab[i] - ssum->tab[i]+smax->tab[i] - psum->tab[i] + dyn_table->tab[i];
         }
@@ -428,7 +445,18 @@ int main(int argc, char **argv)
                 i = end_index-1;
             }
         }
-
+        //int index_of_zeros = find_sum_zero_index(tab,nb_elements, index_of_max_start);
+        //printf("index_of_max_val = %d\nnb_element_sub_tab = %d\n",index_of_max_start ,nb_element_sub_tab);
+        //if(index_of_zeros>0 && index_of_zeros<end_index)end_index = index_of_zeros;
+        /*printf("M : \t");
+        for(int i =0;i<nb_elements;i++){
+          printf("%ld ", M->tab[i]);
+        }
+        printf("\n");
+        printf("i = %d\n",i);
+        printf("maximum_val = %d\n",maximum_val);
+        printf("end_index = %d\n",end_index);
+        printf("index_of_max_start = %d\n",index_of_max_start);*/
 
         printf("%ld ",M->tab[index_of_max_start]);
         for (i=index_of_max_start;i<end_index;i++)
