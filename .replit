@@ -1,2 +1,0 @@
-language = "c"
-run = "./output.md ../data/test4"
