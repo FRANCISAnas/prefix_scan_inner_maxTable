@@ -463,7 +463,6 @@ int main(int argc, char **argv)
             printf("%d ", tab2[i]);
         }
         printf("\n");*/
-        int size_a1 = pow(2, log2(n1) + 1) - 1;
 
         Table a1 = creer_table(ALLOC_SIZE);//malloc(sizeof(int) * size_a1); //create_copieTable(tab1, n1, op);
         initialize(&a1,&tab1_bis, n1, op);
