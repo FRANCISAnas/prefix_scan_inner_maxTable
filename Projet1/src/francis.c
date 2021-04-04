@@ -165,7 +165,7 @@ int ajouter_table(Table *table, int elt, int index) {
 }
 
 void reverse(int *table, int n){
-  //#pragma omp parallel for
+  #pragma omp parallel for
   for(int i = 0; i<n/2;i++){
     int tmp = table[i];
     table[i] = table[n-1-i];
@@ -308,7 +308,7 @@ void final(int *b, int *a, int taille, char op)
     
     //if(boolean){
 
-        //#pragma omp parallel for
+        #pragma omp parallel for
         for (int j = pow(2, m) - 1; j < maxi; j++)
         {
             /*printf("j = %d\t",j);
