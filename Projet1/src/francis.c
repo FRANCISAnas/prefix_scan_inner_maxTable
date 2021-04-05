@@ -433,11 +433,11 @@ int main(int argc, char **argv)
          */
 
         #pragma omp parallel for
-        for(int i = 0;i<nb_elements;i++){ // O(1) loop in parallel
+        for(int i = 0;i<real_nb_of_elements;i++){ // O(1) loop in parallel
             M->tab[i] = pmax->tab[i] - ssum->tab[i]+smax->tab[i] - psum->tab[i] + dyn_table->tab[i];
         }
         // Search the Max in O(N)
-        for(int i = 0;i<nb_elements;){
+        for(int i = 0;i<real_nb_of_elements;){
             if(M->tab[i] > maximum_val){
                 maximum_val = M->tab[i];
                 index_of_max_start = i;
