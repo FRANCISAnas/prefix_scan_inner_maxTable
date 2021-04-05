@@ -33,8 +33,8 @@ void reverse(long*, int); // O(1) reverse elements of table.
 void padding(Table*, char); // O(1) fill the rest of the table with neutral element of op.
 void fill_up(Table*, Table*, int); // O(1) Fills up table 1 with elements of table 2.
 
-// the bellow function inititalize first table with elem_neutre(char) by allocating a size that is double
-// of th 2nd table and then it's going to fill that table with elements of the 2nd one.
+// the bellow function initialize first table with elem_neutre(char) by allocating a size that is double
+// of th 2nd table and then it's going to fill that table with elements of the 2nd one, in O(1).
 void initialize(Table*, Table*,int, char);
 void copy(long*, long*, int); // this function copies elements of table a inside table b.
 
@@ -232,13 +232,11 @@ void final(long *b, long *a, int taille, char op)
 {
     int m = log2(taille);
     int maxi = pow(2, m + 1) - 1;
-
-
+    #pragma omp parallel for
     for (int j = pow(2, m) - 1; j < maxi; j++)
         b[j] = operation(b[j], a[j], op);
 
 }
-
 
 // O(1)
 void fill_up(Table *t1_table, Table *tab, int n1)
@@ -258,14 +256,9 @@ void initialize(Table *a_b_i, Table * tabi,int ni, char op){
     Table t = *tabi;
     Table t_a_b_i = *a_b_i;
     int double_size= 2 * ni - 1;
-
+    #pragma omp parallel for
     for (int i = 0; i <double_size ; i++){
-        if(t_a_b_i->size<double_size){
-            ajouter_table(a_b_i, elem_neutre(op), i);
-        }
-        else{
-            t_a_b_i->tab[i] = elem_neutre(op);
-        }
+        t_a_b_i->tab[i] = elem_neutre(op);
     }
     #pragma omp parallel for
     for (int i = 0; i < ni; i++)
@@ -335,17 +328,20 @@ int main(int argc, char **argv)
             n1 = dyn_table->size;
         }
         int size_b1 = pow(2, log2(n1) + 1) - 1;
+        int double_n1 = 2 * n1 - 1;
         Table tab1_bis = creer_table(n1);
 
         fill_up(&tab1_bis, &dyn_table , n1); // O(1)
-        Table a1 = creer_table(ALLOC_SIZE);
+        Table a1 = creer_table(double_n1);
 
         initialize(&a1,&tab1_bis, n1, op);
+
         /**
          * Compute sum-prefix of Q and store them in array PSUM
         */
+
         montee(a1->tab, n1, op);
-        Table b1 = creer_table(ALLOC_SIZE);
+        Table b1 = creer_table(double_n1);
         initialize(&b1,&tab1_bis,n1,op);
         copy(b1->tab, a1->tab, n1);
         descente(b1->tab, a1->tab, n1, op);
