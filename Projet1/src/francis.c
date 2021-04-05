@@ -87,7 +87,7 @@ static int add_word(Table *table, int index, int my_nb) {
         numbers[i] = numbers[i-1];
     }
 
-    // InsÃ©rer le nouveau number à  la position index
+    // Insérer le nouveau number à  la position index
     numbers[index]= my_nb;
 
     // On a un number de plus dans la table
@@ -294,7 +294,7 @@ int main(int argc, char **argv)
 
         // Start reading file and fill the dynamic table with numbers in the file fp !
         char ch, buff[50], op = '+';
-        int i, j = 0, nb_elements = 0;
+        int i, j = 0, nb_elements = 0,real_nb_of_elements = 0;
 
         Table dyn_table = creer_table(ALLOC_SIZE);
 
@@ -313,7 +313,7 @@ int main(int argc, char **argv)
 
         }while(ch!=EOF);
         fclose(fp);
-
+        real_nb_of_elements = nb_elements;
         int integer_part_of_log2 = (int)log2(nb_elements);
         int reste = nb_elements - pow(2, integer_part_of_log2);
 
@@ -458,13 +458,12 @@ int main(int argc, char **argv)
         // Print the maximum sub_table O(K); K size of sub_table
         // 1<= K <= N
         printf("%ld ",maximum_val);
-        for (i=index_of_max_start;i<end_index;i++)
+        for (i=index_of_max_start;i<real_nb_of_elements && i<end_index-1;i++)
         {
-            if(i<end_index-1)printf("%ld ", dyn_table->tab[i]);
-            else{
-                printf("%ld\n", dyn_table->tab[i]);
-            }
+            printf("%ld ", dyn_table->tab[i]);
         }
+        if(i<real_nb_of_elements)printf("%ld\n", dyn_table->tab[i]);
+        else printf("\n");
 
         // Free the heap.
         detruire_table(&a1);
