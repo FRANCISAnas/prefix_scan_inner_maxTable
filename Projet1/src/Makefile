@@ -27,13 +27,9 @@ INC_PATHS= -I
 LIBS	= -L 
 
 LINKOBJ	= $(SOURCES:.c=.o)
-SOURCEHEADERS = $(SOURCES:.c=.h)
 
 $(EXE_NAME):
 	$(LINKER) -g -o $(EXE_NAME) $(SOURCES) $(FLAGS)
-
-%.o: %.c %.h
-	$(COMPILER) $(FLAGS) -o $@ $(INC_PATHS) 
 
 # cleanup
 clean:

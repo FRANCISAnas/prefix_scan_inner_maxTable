@@ -5,7 +5,8 @@
 #include <limits.h>
 
 // The implementation of the dynamic table was found on the
-// web site of professor EricK GALLESIO and has been modified : http://users.polytech.unice.fr/~eg/PP/Tds/Td08/corrige.html
+// web site of professor EricK GALLESIO and has been modified to be conform to this algorithm :
+// http://users.polytech.unice.fr/~eg/PP/Tds/Td08/corrige.html
 // Everything else is written by :
 // © Anas FRANCIS
 // © 04-04-2021
@@ -30,7 +31,7 @@ long operation(long, long, char);
 long elem_neutre(char);
 void reverse(long*, int);
 void padding(Table*, char);
-void remplir(Table*, Table*, int);
+void fill_up(Table*, Table*, int);
 void initialize(Table*, Table*,int, char);
 void copy(long*, long*, int);
 
@@ -51,10 +52,6 @@ Table creer_table(int alloc_size) {
     return t;
 }
 
-long* numbers_table(Table *table){
-    Table t = *table;
-    return t->tab;
-}
 
 //
 // Ajout dans un tableau (ajustable)
@@ -125,6 +122,7 @@ void reverse(long *table, int n){
     }
 }
 
+// O(1)
 long elem_neutre(char op)
 {
     switch (op)
@@ -149,6 +147,7 @@ long elem_neutre(char op)
             exit(EXIT_FAILURE);
     }
 }
+
 // O(1)
 void padding(Table* table, char op){
     Table t = *table;
@@ -177,7 +176,6 @@ long operation( long val1, long val2, char op)
                 fprintf(stderr, "Error. Dividing by zero !\nProgramme ended with code error -1.\n\a");
                 exit(EXIT_FAILURE);
             }
-
         case 'm':
             if(val1>val2)return val1;
             else return val2;
@@ -187,6 +185,7 @@ long operation( long val1, long val2, char op)
             exit(EXIT_FAILURE);
     }
 }
+
 // O(log(N)) in parallel & O(Nlog(N)) in normal
 void descente( long *b, long *a, int taille, char op)
 {
@@ -239,7 +238,7 @@ void final(long *b, long *a, int taille, char op)
 
 // Amortize in O(1)
 // O(N)
-void remplir(Table *t1, Table *tab, int n1)
+void fill_up(Table *t1, Table *tab, int n1)
 {
     Table t = *tab;
     int index_on_t = 0;
@@ -270,6 +269,7 @@ void initialize(Table *a_b_i, Table * tabi,int ni, char op){
         t_a_b_i->tab[(ni - 1) + i] =  t->tab[i];
     }
 }
+
 //O(1) because in parallel.
 void copy( long *b, long *a, int taille)
 {
@@ -287,26 +287,30 @@ int main(int argc, char **argv)
     }
 
     FILE *fp = fopen(argv[1], "r");
-    if (!fp)
-    {
+
+    if (!fp){
         fprintf(stderr, "couldn't open file name %s...\n\nProgramme exit with code error -1.\n", argv[1]);
         exit(EXIT_FAILURE);
     }
-    else
-    {
+
+    else{
+
+        // Start reading file and fill the dynamic table with numbers in the file fp !
         char ch, buff[50], op = '+';
         int i, j = 0, nb_elements = 0;
+
         Table dyn_table = creer_table(ALLOC_SIZE);
-        // filling dyn_table with elements of fp file is O(N).
+
         do
-        {
+        { // filling dyn_table with elements of fp file is O(N).
             ch = fgetc(fp);
             buff[j++]=ch;
 
             if(ch==' ' || ch=='\t' || ch == '\n'){
                 buff[j] = '\0';
                 int value = atoi(buff);
-                ajouter_table(&dyn_table, value, nb_elements++);
+                ajouter_table(&dyn_table, value, nb_elements++);// ajouter_table will expand the dynamic table
+                // if there is no more place.
                 j = 0;
             }
 
@@ -315,12 +319,11 @@ int main(int argc, char **argv)
 
         int integer_part_of_log2 = (int)log2(nb_elements);
         int reste = nb_elements - pow(2, integer_part_of_log2);
-        /**
-         * Compute sum-prefix of Q and store them in array PSUM
-        */
 
         int n1 = pow(2, integer_part_of_log2);
-        if (reste != 0) // padding dyn_table if nb_elements is not a power of 2.
+        if (reste != 0) // Padding dyn_table if nb_elements is not a power of 2.
+            // size of dyn_table has been doubled we need to do a padding to the end
+            // with elem_neutre(op) function.
             // O(1) because loop in parallel.
         {
             padding(&dyn_table, op);
@@ -330,19 +333,23 @@ int main(int argc, char **argv)
         int size_b1 = pow(2, log2(n1) + 1) - 1;
         Table tab1_bis = creer_table(ALLOC_SIZE);
 
-        remplir(&tab1_bis, &dyn_table , n1);
+        fill_up(&tab1_bis, &dyn_table , n1);
         Table a1 = creer_table(ALLOC_SIZE);
 
         initialize(&a1,&tab1_bis, n1, op);
+        /**
+         * Compute sum-prefix of Q and store them in array PSUM
+        */
         montee(a1->tab, n1, op);
         Table b1 = creer_table(ALLOC_SIZE);
         initialize(&b1,&tab1_bis,n1,op);
         copy(b1->tab, a1->tab, n1);
         descente(b1->tab, a1->tab, n1, op);
         final(b1->tab, a1->tab, n1, op);
-
         Table psum = creer_table(ALLOC_SIZE);
         i = 0;
+
+        // O(N) fill the psum table.
         while(i<nb_elements){
             ajouter_table(&psum, b1->tab[size_b1-1-i],i);
             i++;
@@ -362,11 +369,12 @@ int main(int argc, char **argv)
         final(b1->tab, a1->tab, n1, op);
         i = 0;
 
+        // O(N) fill the ssum table.
         while(i<nb_elements){
             ajouter_table(&ssum, b1->tab[size_b1-1-i],i);
             i++;
         }
-        op = 'm';
+        op = 'm'; // change the operation to Max
         /**
          * Compute max-suffix of PSUM and store them in array SMAX
          */
@@ -380,6 +388,7 @@ int main(int argc, char **argv)
         final(b1->tab, a1->tab, n1, op);
         i=0;
 
+        // O(N) fill the smax table.
         while(i<nb_elements){
             ajouter_table(&smax,b1->tab[size_b1-1-i],i);
             i++;
@@ -387,6 +396,7 @@ int main(int argc, char **argv)
         /**
          * Compute max-prefix of SSUM and store them in array PMAX
         */
+
         Table pmax= creer_table(ALLOC_SIZE);
         initialize(&a1, &ssum, n1, op);
         montee(a1->tab, n1, op);
@@ -395,23 +405,36 @@ int main(int argc, char **argv)
         descente(b1->tab, a1->tab, n1, op);
         final(b1->tab, a1->tab, n1, op);
         i=0;
+
+        // O(N) fill the pmax table.
         while(i<nb_elements){
             ajouter_table(&pmax, b1->tab[size_b1-1-i],i);
             i++;
         }
+        // The next 2 reverse operations are in O(1).
+        // Reverse the psum and pmax table to compute M.
+        // Because the ajouter_table(...) function add the elements in the reverse order.
         reverse(psum->tab, nb_elements);
         reverse(pmax->tab, nb_elements);
 
+        // Create a dynamic table of size nb_elements which is a power of 2, to compute M.
         Table M = creer_table(nb_elements);
 
         long maximum_val = elem_neutre('m');
-        int index_of_max_start = -1, end_index = 0;
-        // O(1) loop in parallel
+        int index_of_max_start = -1, end_index = 0; // index of start and index of end in the Q table
+
+        /**
+         * for 1 <= i <= n do in parallel
+         * Ms[i] = pmax[i] - ssum[i] + Q[i]
+         * Mp[i] = smax[i] - psum[i] + Q[i]
+         * M[i] = Ms[i] + Mp[i] - Q[i]
+         */
+
         #pragma omp parallel for
-        for(int i = 0;i<nb_elements;i++){
+        for(int i = 0;i<nb_elements;i++){ // O(1) loop in parallel
             M->tab[i] = pmax->tab[i] - ssum->tab[i]+smax->tab[i] - psum->tab[i] + dyn_table->tab[i];
         }
-
+        // Search the Max in O(N)
         for(int i = 0;i<nb_elements;i++){
             if(M->tab[i] > maximum_val){
                 maximum_val = M->tab[i];
@@ -429,17 +452,18 @@ int main(int argc, char **argv)
             }
         }
 
-
+        // Print the maximum sub_table O(K); K size of sub_table
+        // 1<= K <= N
         printf("%ld ",M->tab[index_of_max_start]);
         for (i=index_of_max_start;i<end_index;i++)
         {
             if(i<end_index-1)printf("%ld ", dyn_table->tab[i]);
             else{
-                printf("%ld", dyn_table->tab[i]);
-                printf("\n");
+                printf("%ld\n", dyn_table->tab[i]);
             }
         }
 
+        // Free the heap.
         detruire_table(&a1);
         detruire_table(&b1);
         detruire_table(&tab1_bis);
