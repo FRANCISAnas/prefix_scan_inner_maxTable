@@ -27,7 +27,7 @@ typedef struct t_table *Table;
 void descente(long*, long *, int, char);
 void final(long*, long *, int, char);
 void montee(long*, int, char);
-long operation(long, long, char);// rO(1) eturns the result of elem1 and elem2 using the operation op
+long operation(long, long, char);// O(1) returns the result of elem1 and elem2 using the operation op
 long elem_neutre(char); // O(1) returns neutral element of operation op.
 void reverse(long*, int); // O(1) reverse elements of table.
 void padding(Table*, char); // O(1) fill the rest of the table with neutral element of op.
