@@ -27,13 +27,16 @@ typedef struct t_table *Table;
 void descente(long*, long *, int, char);
 void final(long*, long *, int, char);
 void montee(long*, int, char);
-long operation(long, long, char);
-long elem_neutre(char);
-void reverse(long*, int);
-void padding(Table*, char);
-void fill_up(Table*, Table*, int);
+long operation(long, long, char);// returns the result of elem1 and elem2 using the operation op
+long elem_neutre(char); // returns neutral element of operation op.
+void reverse(long*, int); // reverse elements of table.
+void padding(Table*, char); // fill the rest of the table with neutral element of op.
+void fill_up(Table*, Table*, int); // Fills up table 1 with elements of table 2.
+
+// the bellow function inititalize first table with elem_neutre(char) by allocating a size that is double
+// of th 2nd table and then it's going to fill that table with elements of the 2nd one.
 void initialize(Table*, Table*,int, char);
-void copy(long*, long*, int);
+void copy(long*, long*, int); // this function copies elements of table a inside table b.
 
 //
 // Creation d'une table vide
@@ -375,6 +378,7 @@ int main(int argc, char **argv)
             i++;
         }
         op = 'm'; // change the operation to Max
+
         /**
          * Compute max-suffix of PSUM and store them in array SMAX
          */
@@ -393,6 +397,7 @@ int main(int argc, char **argv)
             ajouter_table(&smax,b1->tab[size_b1-1-i],i);
             i++;
         }
+
         /**
          * Compute max-prefix of SSUM and store them in array PMAX
         */
@@ -435,7 +440,7 @@ int main(int argc, char **argv)
             M->tab[i] = pmax->tab[i] - ssum->tab[i]+smax->tab[i] - psum->tab[i] + dyn_table->tab[i];
         }
         // Search the Max in O(N)
-        for(int i = 0;i<nb_elements;i++){
+        for(int i = 0;i<nb_elements;){
             if(M->tab[i] > maximum_val){
                 maximum_val = M->tab[i];
                 index_of_max_start = i;
@@ -444,17 +449,18 @@ int main(int argc, char **argv)
                     end_index++;
                 }
                 else{
-                    while(M->tab[end_index] == maximum_val){
+                    while(end_index<nb_elements && M->tab[end_index] == maximum_val ){
                         end_index++;
                     }
                 }
-                i = end_index-1;
+                i = end_index;
             }
+            else i++;
         }
 
         // Print the maximum sub_table O(K); K size of sub_table
         // 1<= K <= N
-        printf("%ld ",M->tab[index_of_max_start]);
+        printf("%ld ",maximum_val);
         for (i=index_of_max_start;i<end_index;i++)
         {
             if(i<end_index-1)printf("%ld ", dyn_table->tab[i]);

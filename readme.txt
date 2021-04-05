@@ -1,8 +1,5 @@
 # prefix_scan_inner_maxTable
 
-See on github : https://github.com/FRANCISAnas/prefix_scan_inner_maxTable
-
-By the time you read this readme.txt file the github repository will be public.
 
 Project to find the maximum inner array of an array of 1D, this can be extended to be used for 2D arrays too.
 
@@ -15,7 +12,7 @@ To compile and execute the code you must use openmp option :
 And the to execute the programme juste do : "./output.mp your_input_data_file"
 Note that you must specify exactly ONE input file otherwise the code will exit with code error -1.
 
-This Work contains a Makefile, if you're under a machine that has linux OS just launch "make".
+This Work contains a Makefile, if you're under a machine that has linux OS just launch "make" command line in terminal.
 
 Methode in parallel :
 void descente(long*, long *, int, char); Inner loop in parallel.
