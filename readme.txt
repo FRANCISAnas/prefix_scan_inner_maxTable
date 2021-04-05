@@ -21,5 +21,6 @@ void reverse(long*, int); In parallel
 void padding(Table*, char); In parallel
 void initialize(Table*, Table*,int, char); Contains 2 for loop the 2nd is in parallel
 void copy(long*, long*, int); In parallel
+void fill_up(Table *, Table *, int ); In parallel
 
 And also the section to compute the elements of the final table M, this loop is in parallel.

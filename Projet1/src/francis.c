@@ -27,11 +27,11 @@ typedef struct t_table *Table;
 void descente(long*, long *, int, char);
 void final(long*, long *, int, char);
 void montee(long*, int, char);
-long operation(long, long, char);// returns the result of elem1 and elem2 using the operation op
-long elem_neutre(char); // returns neutral element of operation op.
-void reverse(long*, int); // reverse elements of table.
-void padding(Table*, char); // fill the rest of the table with neutral element of op.
-void fill_up(Table*, Table*, int); // Fills up table 1 with elements of table 2.
+long operation(long, long, char);// rO(1) eturns the result of elem1 and elem2 using the operation op
+long elem_neutre(char); // O(1) returns neutral element of operation op.
+void reverse(long*, int); // O(1) reverse elements of table.
+void padding(Table*, char); // O(1) fill the rest of the table with neutral element of op.
+void fill_up(Table*, Table*, int); // O(1) Fills up table 1 with elements of table 2.
 
 // the bellow function inititalize first table with elem_neutre(char) by allocating a size that is double
 // of th 2nd table and then it's going to fill that table with elements of the 2nd one.
@@ -233,21 +233,22 @@ void final(long *b, long *a, int taille, char op)
     int m = log2(taille);
     int maxi = pow(2, m + 1) - 1;
 
-    #pragma omp parallel for
+
     for (int j = pow(2, m) - 1; j < maxi; j++)
         b[j] = operation(b[j], a[j], op);
 
 }
 
-// Amortize in O(1)
-// O(N)
-void fill_up(Table *t1, Table *tab, int n1)
+
+// O(1)
+void fill_up(Table *t1_table, Table *tab, int n1)
 {
     Table t = *tab;
-    int index_on_t = 0;
+    Table t1 = *t1_table;
+    #pragma omp parallel for
     for (int i = 0; i < n1; i++)
     {
-        ajouter_table(t1, t->tab[index_on_t++], i);
+        t1->tab[i] = t->tab[i];
     }
 }
 
@@ -305,7 +306,7 @@ int main(int argc, char **argv)
         Table dyn_table = creer_table(ALLOC_SIZE);
 
         do
-        { // filling dyn_table with elements of fp file is O(N).
+        { // filling dyn_table with elements of fp file is amortize O(1).
             ch = fgetc(fp);
             buff[j++]=ch;
 
@@ -323,7 +324,7 @@ int main(int argc, char **argv)
         int integer_part_of_log2 = (int)log2(nb_elements);
         int reste = nb_elements - pow(2, integer_part_of_log2);
 
-        int n1 = pow(2, integer_part_of_log2);
+        int n1 = pow(2, integer_part_of_log2); // n1 must be a power of 2.
         if (reste != 0) // Padding dyn_table if nb_elements is not a power of 2.
             // size of dyn_table has been doubled we need to do a padding to the end
             // with elem_neutre(op) function.
@@ -334,9 +335,9 @@ int main(int argc, char **argv)
             n1 = dyn_table->size;
         }
         int size_b1 = pow(2, log2(n1) + 1) - 1;
-        Table tab1_bis = creer_table(ALLOC_SIZE);
+        Table tab1_bis = creer_table(n1);
 
-        fill_up(&tab1_bis, &dyn_table , n1);
+        fill_up(&tab1_bis, &dyn_table , n1); // O(1)
         Table a1 = creer_table(ALLOC_SIZE);
 
         initialize(&a1,&tab1_bis, n1, op);
